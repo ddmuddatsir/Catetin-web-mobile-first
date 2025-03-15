@@ -1,101 +1,156 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState, useRef } from "react";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
+import NewTransactionScreen from "./newtransaction/page";
+
+import HomeHeader from "@/components/headers/HomeHeader";
+import HomeFooter from "@/components/footers/HomeFooter";
+import FilteredTransactions from "@/components/FilteredTransactions";
+import TransactionGraph from "@/components/TransactionGraph";
+import TransactionList from "@/components/TransactionList";
+import { Transaction } from "@/types/Transactions";
+import { useQuery } from "@tanstack/react-query";
+import CalendarComponent from "@/components/CalendarComponent";
+import TotalTransactionCard from "@/components/TotalTransaction";
+import { fetchTransactions } from "@/utils/fetchTransactions";
+import {
+  useDeleteTransaction,
+  useUpdateTransaction,
+} from "@/utils/transactionMutations";
+import { useOutsideClick } from "@/hooks/useOutsideClick";
+import {
+  calculateTotalAmount,
+  filterTransactionsByDate,
+  getSortedTransactions,
+  groupTransactionsByDate,
+} from "@/utils/transactionUtils";
+
+// Register ChartJS
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
+const Home = () => {
+  const [isNewTransactionOpen, setIsNewTransactionOpen] = useState(false);
+  const [date, setDate] = useState<Date>(new Date());
+  const [filter, setFilter] = useState("all");
+  const [view, setView] = useState<"list" | "graph">("list");
+  const [editingTransaction, setEditingTransaction] =
+    useState<Transaction | null>(null);
+  const [newData, setNewData] = useState<Transaction>({
+    id: "",
+    amount: 0,
+    description: "",
+    date: new Date().toISOString(),
+    category: { id: "", name: "" },
+  });
+
+  const calendarRef = useRef<HTMLDivElement | null>(
+    null
+  ) as React.RefObject<HTMLElement>;
+
+  // Fetch data
+  const { data: transactions = [] } = useQuery({
+    queryKey: ["transactions"],
+    queryFn: async () => fetchTransactions(),
+  });
+
+  // Mutations
+  const deleteMutation = useDeleteTransaction();
+  const updateMutation = useUpdateTransaction(
+    setEditingTransaction,
+    setIsNewTransactionOpen
+    // setShowOptions
+  );
+
+  // Handle actions
+  const handleDelete = (id: string) => deleteMutation.mutate(id);
+  const handleEdit = (transaction: Transaction) =>
+    setEditingTransaction(transaction);
+  const handleUpdate = () => {
+    if (editingTransaction) {
+      updateMutation.mutate(newData, {
+        onSuccess: () => {
+          setEditingTransaction(null);
+          setIsNewTransactionOpen(false);
+        },
+      });
+    }
+  };
+
+  // Filtering and grouping
+  const sortedTransactions = getSortedTransactions(transactions, filter);
+  const filteredTransactions = filterTransactionsByDate(
+    sortedTransactions,
+    date
+  );
+  const groupedTransactions = groupTransactionsByDate(filteredTransactions);
+  const total = calculateTotalAmount(transactions);
+
+  // Handle click outside for calendar
+  useOutsideClick(calendarRef, () => setIsNewTransactionOpen(false));
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <div className="flex flex-col flex-1 bg-gray-50">
+      <HomeHeader />
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+      <CalendarComponent date={date} setDate={setDate} />
+
+      <TotalTransactionCard
+        total={total}
+        setIsNewTransactionOpen={setIsNewTransactionOpen}
+      />
+
+      {view === "list" ? (
+        <div className="flex-1">
+          <FilteredTransactions
+            filter={filter}
+            onFilterChange={setFilter}
+            transactions={transactions}
+            date={date}
+          />
+          <div className="max-h-[calc(54vh-38px)] overflow-y-auto my-2">
+            <TransactionList
+              groupedTransactions={groupedTransactions}
+              editingTransaction={editingTransaction}
+              newData={newData}
+              setEditingTransaction={setEditingTransaction}
+              setNewData={setNewData}
+              handleEdit={handleEdit}
+              handleUpdate={handleUpdate}
+              handleDelete={handleDelete}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      ) : (
+        <TransactionGraph transactions={filteredTransactions} />
+      )}
+
+      <HomeFooter
+        view={view}
+        setView={setView}
+        setIsNewTransactionOpen={setIsNewTransactionOpen}
+      />
+
+      {isNewTransactionOpen && (
+        <NewTransactionScreen onClose={() => setIsNewTransactionOpen(false)} />
+      )}
     </div>
   );
-}
+};
+
+export default Home;
