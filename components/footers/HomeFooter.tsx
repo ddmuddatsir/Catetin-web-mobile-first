@@ -21,7 +21,8 @@ const HomeFooter: React.FC<HomeFooterProps> = ({
 }) => {
   return (
     <TooltipProvider>
-      <footer className="flex mt-auto items-center justify-around p-4 bg-white shadow-md">
+      {/* <footer className="flex mt-auto items-center justify-around p-4 bg-white shadow-md"> */}
+      <footer className="fixed bottom-0 left-0 right-0 mx-auto w-full max-w-md py-4  bg-white shadow-md rounded-t-xl z-50 flex items-center justify-around">
         {/* Tombol List View */}
         <Tooltip>
           <TooltipTrigger asChild>

@@ -66,12 +66,12 @@ const TransactionGraph = ({
   return (
     <div className="p-4 space-y-4">
       {/* Grafik */}
-      <div className="relative w-full h-64 md:h-80 lg:h-60 bg-purple-50 rounded-xl shadow">
+      <div className="relative w-full h-64 md:h-50 lg:h-60 bg-purple-50 rounded-xl shadow">
         <Bar data={chartData} options={chartOptions} />
       </div>
 
       {/* Kartu kategori */}
-      <div className="max-h-[calc(34vh-30px)] overflow-y-auto">
+      <div className="max-h-[calc(38vh-28px)] overflow-y-auto">
         <div className="py-2 rounded-lg">
           <CardContent className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {Object.entries(categoryTotals)

@@ -105,7 +105,8 @@ const Home = () => {
   useOutsideClick(calendarRef, () => setIsNewTransactionOpen(false));
 
   return (
-    <div className="flex flex-col flex-1 bg-gray-50">
+    // <div className="flex flex-col flex-1 bg-gray-50">
+    <div className="flex flex-col min-h-screen bg-gray-50 relative">
       <HomeHeader />
 
       <CalendarComponent date={date} setDate={setDate} />
