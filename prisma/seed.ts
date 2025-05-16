@@ -39,7 +39,7 @@ async function main() {
         amount: 10000,
         description: "Lunch at restaurant",
         date: new Date(),
-        categoryId: foodCategory.id, // Use the ID directly
+        categoryId: foodCategory.id,
       },
     });
   }
@@ -50,7 +50,7 @@ async function main() {
         amount: 20000,
         description: "Fuel for car",
         date: new Date(),
-        categoryId: transportCategory.id, // Use the ID directly
+        categoryId: transportCategory.id,
       },
     });
   }
