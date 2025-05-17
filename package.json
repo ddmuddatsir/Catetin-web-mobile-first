@@ -7,6 +7,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
+    "postbuild": "prisma generate && prisma db seed",
     "lint": "next lint"
   },
   "prisma": {
