@@ -11,7 +11,7 @@
     "lint": "next lint"
   },
   "prisma": {
-    "seed": "ts-node prisma/seed.ts"
+    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
   },
   "dependencies": {
     "@json2csv/plainjs": "^7.0.6",
