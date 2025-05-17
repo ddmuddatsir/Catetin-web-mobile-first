@@ -5,7 +5,13 @@ import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 
-const NewTransactionScreen = ({ onClose }: { onClose: () => void }) => {
+interface NewTransactionModalProps {
+  onClose: () => void;
+}
+
+export const NewTransactionModal: React.FC<NewTransactionModalProps> = ({
+  onClose,
+}) => {
   const queryClient = useQueryClient();
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState<{
@@ -21,7 +27,6 @@ const NewTransactionScreen = ({ onClose }: { onClose: () => void }) => {
     setDate(new Date().toISOString().split("T")[0]);
   }, []);
 
-  // Mutation for adding a new transaction
   const mutation = useMutation({
     mutationFn: async (newTransaction: {
       amount: number;
@@ -37,10 +42,8 @@ const NewTransactionScreen = ({ onClose }: { onClose: () => void }) => {
       setDescription("");
       setDate(new Date().toISOString().split("T")[0]);
       setCategory(null);
-      // Tambahkan notifikasi transaksi sukses di sini
       alert("Transaction successfully added!");
-      // Refresh halaman
-      window.location.reload();
+      onClose(); // Tutup modal
     },
   });
 
@@ -55,51 +58,35 @@ const NewTransactionScreen = ({ onClose }: { onClose: () => void }) => {
       amount: parseFloat(amount) || 0,
       description,
       date,
-      categoryId: category.id, // Kirim ID kategori, bukan nama
+      categoryId: category.id,
     });
   };
 
-  // Function untuk menangani input dari kalkulator
   const handleCalculatorInput = (value: string | number) => {
     if (value === "⌫") {
-      setAmount(amount.slice(0, -1));
+      setAmount((prev) => prev.slice(0, -1));
     } else {
-      setAmount(amount + value);
+      setAmount((prev) => prev + value);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end justify-center z-50">
-      <div className="bg-white w-full max-w-md rounded-t-lg shadow-lg p-6">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-gray-800">
-            New Transaction
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-600 hover:text-gray-900"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
+    <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex justify-center items-end">
+      <div className="bg-white w-full max-w-md rounded-lg shadow-lg p-6 relative">
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute top-2 right-2 text-gray-600 hover:text-red-600 text-xl font-bold"
+        >
+          &times;
+        </button>
 
-        {/* Form */}
+        <h2 className="text-xl font-semibold text-gray-800 mb-6">
+          New Transaction
+        </h2>
+
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Komponen Amount */}
+          {/* Amount */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Amount
@@ -107,14 +94,20 @@ const NewTransactionScreen = ({ onClose }: { onClose: () => void }) => {
             <input
               type="text"
               value={amount}
-              readOnly
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100"
+              onChange={(e) => {
+                // Validasi agar hanya angka dan titik yang bisa diketik
+                const newValue = e.target.value;
+                if (/^\d*\.?\d*$/.test(newValue)) {
+                  setAmount(newValue);
+                }
+              }}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               placeholder="0"
               required
             />
           </div>
 
-          {/* Komponen Category */}
+          {/* Category */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Category
@@ -131,7 +124,7 @@ const NewTransactionScreen = ({ onClose }: { onClose: () => void }) => {
             </button>
           </div>
 
-          {/* Komponen Date */}
+          {/* Date */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Date
@@ -153,13 +146,13 @@ const NewTransactionScreen = ({ onClose }: { onClose: () => void }) => {
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none"
               rows={3}
               placeholder="Add a note (optional)"
             />
           </div>
 
-          {/* Komponen Kalkulator Minimalis */}
+          {/* Calculator */}
           <div className="grid grid-cols-4 gap-2 mt-4">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0, "00", "⌫"].map((item) => (
               <button
@@ -173,7 +166,7 @@ const NewTransactionScreen = ({ onClose }: { onClose: () => void }) => {
             ))}
           </div>
 
-          {/* Button Add Transaction */}
+          {/* Submit Button */}
           <button
             type="submit"
             className="w-full bg-purple-500 text-white p-2 rounded hover:bg-purple-600 mt-4"
@@ -183,10 +176,13 @@ const NewTransactionScreen = ({ onClose }: { onClose: () => void }) => {
           </button>
         </form>
 
-        {/* Komponen Category Picker */}
+        {/* Category Picker Modal */}
         {isCategoryPickerOpen && (
           <CategoryPicker
-            onSelect={(selectedCategory) => setCategory(selectedCategory)}
+            onSelect={(selectedCategory) => {
+              setCategory(selectedCategory);
+              setIsCategoryPickerOpen(false);
+            }}
             onClose={() => setIsCategoryPickerOpen(false)}
           />
         )}
@@ -194,5 +190,3 @@ const NewTransactionScreen = ({ onClose }: { onClose: () => void }) => {
     </div>
   );
 };
-
-export default NewTransactionScreen;

@@ -66,10 +66,7 @@ const SearchScreen = () => {
 
   // Mutations
   const deleteMutation = useDeleteTransaction();
-  const updateMutation = useUpdateTransaction(
-    setEditingTransaction,
-    setIsNewTransactionOpen
-  );
+  const updateMutation = useUpdateTransaction(setEditingTransaction);
 
   // Handle actions
   const handleDelete = (id: string) => deleteMutation.mutate(id);

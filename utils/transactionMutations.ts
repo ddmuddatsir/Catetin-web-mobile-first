@@ -16,8 +16,8 @@ export const useDeleteTransaction = () => {
 };
 
 export const useUpdateTransaction = (
-  setEditingTransaction: (value: Transaction | null) => void,
-  setIsModalOpen: (value: boolean) => void
+  setEditingTransaction: (value: Transaction | null) => void
+  // setIsModalOpen: (value: boolean) => void
   //   setShowOptions: (value: string | null) => void
 ) => {
   const queryClient = useQueryClient();
@@ -37,7 +37,7 @@ export const useUpdateTransaction = (
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       setEditingTransaction(null);
-      setIsModalOpen(false);
+      // setIsModalOpen(false);
     },
   });
 };
