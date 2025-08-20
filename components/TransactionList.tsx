@@ -6,18 +6,16 @@ import { Input } from "@/components/ui/input";
 import NotFound from "./NotFound";
 import { Transaction } from "@/types/Transactions";
 
-// Definisi tipe data untuk transaksi yang dikelompokkan berdasarkan tanggal
 interface GroupedTransactions {
   [date: string]: Transaction[];
 }
 
-// Properti yang diterima oleh komponen
 interface TransactionListProps {
   groupedTransactions: GroupedTransactions;
   editingTransaction: Transaction | null;
-  newData: Transaction; // Ubah dari Partial<Transaction> ke Transaction penuh
+  newData: Transaction;
   setEditingTransaction: (transaction: Transaction | null) => void;
-  setNewData: React.Dispatch<React.SetStateAction<Transaction>>; // Perbaiki tipe
+  setNewData: React.Dispatch<React.SetStateAction<Transaction>>;
   handleEdit: (transaction: Transaction) => void;
   handleUpdate: () => void;
   handleDelete: (transactionId: string) => void;

@@ -4,7 +4,6 @@ const prisma = new PrismaClient();
 
 async function main() {
   try {
-    // Coba ambil data paling sederhana, misal versi PostgreSQL
     const result = await prisma.$queryRaw`SELECT version();`;
     console.log("Koneksi berhasil:", result);
   } catch (error) {

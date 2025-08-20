@@ -3,7 +3,6 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  // Create categories with more icons
   const categories = [
     { name: "Makanan", icon: "🍔" },
     { name: "Transportasi", icon: "🚗" },
@@ -15,18 +14,16 @@ async function main() {
     { name: "Gaji", icon: "💰" },
   ];
 
-  // Upsert categories
   for (const category of categories) {
     await prisma.category.upsert({
-      where: { name: category.name }, // Use 'name' as unique identifier
-      update: {}, // If exists, do nothing
-      create: category, // Otherwise, create the category
+      where: { name: category.name },
+      update: {},
+      create: category,
     });
   }
 
-  // Find categories by name and create transactions
   const foodCategory = await prisma.category.findFirst({
-    where: { name: "Makanan" }, // 'findFirst' works with any field
+    where: { name: "Makanan" },
   });
 
   const transportCategory = await prisma.category.findFirst({

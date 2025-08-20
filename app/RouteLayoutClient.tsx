@@ -2,6 +2,8 @@
 
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import Providers from "@/utils/providers";
+import InstallPrompt from "@/components/InstallPrompt";
+import PWAStatus from "@/components/PWAStatus";
 
 export default function RootLayoutClient({
   children,
@@ -12,7 +14,11 @@ export default function RootLayoutClient({
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Providers>{children}</Providers>
+      <Providers>
+        <PWAStatus />
+        {children}
+        <InstallPrompt />
+      </Providers>
     </QueryClientProvider>
   );
 }

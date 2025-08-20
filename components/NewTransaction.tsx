@@ -95,7 +95,6 @@ export const NewTransactionModal: React.FC<NewTransactionModalProps> = ({
               type="text"
               value={amount}
               onChange={(e) => {
-                // Validasi agar hanya angka dan titik yang bisa diketik
                 const newValue = e.target.value;
                 if (/^\d*\.?\d*$/.test(newValue)) {
                   setAmount(newValue);

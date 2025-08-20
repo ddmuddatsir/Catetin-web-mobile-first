@@ -10,7 +10,6 @@ const CategoryPicker = ({
   onSelect: (category: { id: string; name: string }) => void;
   onClose: () => void;
 }) => {
-  // Fetch categories
   const {
     data: categories,
     isLoading,

@@ -33,11 +33,10 @@ const SearchScreen = () => {
     category: { id: "", name: "" },
   });
 
-  const [, setIsNewTransactionOpen] = useState(false); // Dideklarasikan
+  const [, setIsNewTransactionOpen] = useState(false);
 
   const router = useRouter();
 
-  // **Fetching transactions menggunakan TanStack Query**
   const {
     data: transactions = [],
     isLoading,
@@ -47,12 +46,10 @@ const SearchScreen = () => {
     queryFn: fetchTransactions,
   });
 
-  // **Filtering transactions**
   const filteredTransactions = transactions.filter((transaction) =>
     transaction.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // **Sorting berdasarkan filter**
   if (filter === "largest") {
     filteredTransactions.sort((a, b) => b.amount - a.amount);
   } else {
@@ -61,14 +58,11 @@ const SearchScreen = () => {
     );
   }
 
-  // **Mengelompokkan transaksi berdasarkan tanggal**
   const groupedTransactions = groupTransactionsByDate(filteredTransactions);
 
-  // Mutations
   const deleteMutation = useDeleteTransaction();
   const updateMutation = useUpdateTransaction(setEditingTransaction);
 
-  // Handle actions
   const handleDelete = (id: string) => deleteMutation.mutate(id);
   const handleEdit = (transaction: Transaction) =>
     setEditingTransaction(transaction);

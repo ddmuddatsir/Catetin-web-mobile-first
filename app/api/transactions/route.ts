@@ -1,31 +1,42 @@
-// app/api/transactions/route.ts
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import {
+  transactionService,
+  categoryService,
+  convertTimestamp,
+  createTimestamp,
+} from "@/lib/firestore";
 import { stringify } from "csv-stringify/sync";
-import { parse } from "csv-parse/sync"; // Import parse dari csv-parse/sync
+import { parse } from "csv-parse/sync";
 
-const prisma = new PrismaClient();
-
-// GET all transactions
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const format = searchParams.get("format");
 
   try {
-    const transactions = await prisma.transaction.findMany({
-      include: {
-        category: true,
-      },
-    });
+    const transactions = await transactionService.getAll();
+    const categories = await categoryService.getAll();
+
+    // Create a category map for quick lookup
+    const categoryMap = new Map(categories.map((cat) => [cat.id!, cat]));
+
+    // Transform transactions to include category info
+    const transformedTransactions = transactions.map((transaction) => ({
+      id: transaction.id,
+      amount: transaction.amount,
+      description: transaction.description,
+      date: convertTimestamp(transaction.date),
+      category: categoryMap.get(transaction.categoryId) || null,
+      categoryId: transaction.categoryId,
+    }));
 
     if (format === "csv") {
       const csvData = stringify(
-        transactions.map((t) => ({
+        transformedTransactions.map((t) => ({
           id: t.id,
           amount: t.amount,
           description: t.description,
-          date: t.date.toISOString(),
-          category: t.category.name,
+          date: t.date,
+          category: t.category?.name || "Unknown",
         })),
         { header: true }
       );
@@ -38,7 +49,7 @@ export async function GET(req: Request) {
       });
     }
 
-    return NextResponse.json(transactions);
+    return NextResponse.json(transformedTransactions);
   } catch (error) {
     console.error("Error fetching transactions:", error);
     return NextResponse.json(
@@ -53,19 +64,25 @@ export async function POST(req: Request) {
     const contentType = req.headers.get("content-type");
 
     if (contentType?.includes("application/json")) {
-      // Handle JSON request (single transaction creation)
       const { amount, description, date, categoryId } = await req.json();
-      const transaction = await prisma.transaction.create({
-        data: {
-          amount,
-          description,
-          date: new Date(date),
-          categoryId,
-        },
+
+      if (!amount || !description || !date || !categoryId) {
+        return NextResponse.json(
+          { error: "All fields are required" },
+          { status: 400 }
+        );
+      }
+
+      const transactionId = await transactionService.create({
+        amount: parseFloat(amount),
+        description,
+        date: createTimestamp(date),
+        categoryId,
       });
+
+      const transaction = await transactionService.getById(transactionId);
       return NextResponse.json(transaction);
     } else if (contentType?.includes("multipart/form-data")) {
-      // Handle FormData request (CSV import)
       const formData = await req.formData();
       const file = formData.get("file");
 
@@ -87,24 +104,25 @@ export async function POST(req: Request) {
         skip_empty_lines: true,
       });
 
+      const categories = await categoryService.getAll();
+      const categoryMap = new Map(categories.map((cat) => [cat.name, cat.id!]));
+
       const transactions = await Promise.all(
         records.map(async (record) => {
-          const category = await prisma.category.findUnique({
-            where: { name: record.category },
-          });
+          const categoryId = categoryMap.get(record.category);
 
-          if (!category) {
+          if (!categoryId) {
             return null;
           }
 
-          return prisma.transaction.create({
-            data: {
-              amount: parseFloat(record.amount),
-              description: record.description,
-              date: new Date(record.date),
-              categoryId: category.id,
-            },
+          const transactionId = await transactionService.create({
+            amount: parseFloat(record.amount),
+            description: record.description,
+            date: createTimestamp(record.date),
+            categoryId,
           });
+
+          return await transactionService.getById(transactionId);
         })
       );
 
@@ -127,7 +145,6 @@ export async function POST(req: Request) {
   }
 }
 
-// PUT update transaction
 export async function PUT(req: Request) {
   try {
     const body = await req.json();
@@ -138,16 +155,14 @@ export async function PUT(req: Request) {
       );
     }
 
-    const transaction = await prisma.transaction.update({
-      where: { id: body.id },
-      data: {
-        amount: body.amount,
-        description: body.description,
-        date: new Date(body.date),
-        categoryId: body.categoryId,
-      },
+    await transactionService.update(body.id, {
+      amount: body.amount,
+      description: body.description,
+      date: createTimestamp(body.date),
+      categoryId: body.categoryId,
     });
 
+    const transaction = await transactionService.getById(body.id);
     return NextResponse.json(transaction);
   } catch (error) {
     console.error("Error updating transaction:", error);
@@ -158,21 +173,26 @@ export async function PUT(req: Request) {
   }
 }
 
-// DELETE single or all transactions
 export async function DELETE(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const all = searchParams.get("all");
 
     if (all === "true") {
-      // Hapus semua transaksi
-      await prisma.transaction.deleteMany();
+      // Get all transactions and delete them one by one
+      // Firestore doesn't have deleteMany, so we need to delete individually
+      const transactions = await transactionService.getAll();
+      await Promise.all(
+        transactions.map((transaction) =>
+          transactionService.delete(transaction.id!)
+        )
+      );
+
       return NextResponse.json({
         message: "All transactions deleted successfully",
       });
     }
 
-    // Hapus satu transaksi berdasarkan ID
     const body = await req.json();
     if (!body.id) {
       return NextResponse.json(
@@ -181,9 +201,7 @@ export async function DELETE(req: Request) {
       );
     }
 
-    await prisma.transaction.delete({
-      where: { id: body.id },
-    });
+    await transactionService.delete(body.id);
 
     return NextResponse.json({ message: "Transaction deleted successfully" });
   } catch (error) {
