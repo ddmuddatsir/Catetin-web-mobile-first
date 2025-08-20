@@ -42,7 +42,6 @@ ChartJS.register(
 );
 
 const Home = () => {
-  const [, setIsNewTransactionOpen] = useState(false);
   const [date, setDate] = useState<Date>(new Date());
   const [filter, setFilter] = useState("all");
   const [view, setView] = useState<"list" | "graph">("list");
@@ -89,10 +88,7 @@ const Home = () => {
     <div className="flex flex-col min-h-screen bg-gray-50 relative">
       <HomeHeader />
       <CalendarComponent date={date} setDate={setDate} />
-      <TotalTransactionCard
-        total={total}
-        setIsNewTransactionOpen={setIsNewTransactionOpen}
-      />
+      <TotalTransactionCard total={total} />
 
       {view === "list" ? (
         <div className="flex-1">

@@ -48,7 +48,8 @@ const TransactionList: React.FC<TransactionListProps> = ({
     console.log("Status Modal Sekarang:", isModalOpen);
   }, [isModalOpen]);
 
-  const handleTransactionClick = (transactionId: string) => {
+  const handleTransactionClick = (transactionId: string | undefined) => {
+    if (!transactionId) return;
     setShowOptions((prev) => (prev === transactionId ? null : transactionId));
   };
 
@@ -99,7 +100,9 @@ const TransactionList: React.FC<TransactionListProps> = ({
                             Edit
                           </button>
                           <button
-                            onClick={() => handleDelete(transaction.id)}
+                            onClick={() =>
+                              transaction.id && handleDelete(transaction.id)
+                            }
                             className="block w-full text-left text-red-600 hover:bg-gray-100 p-2 rounded"
                           >
                             Delete
